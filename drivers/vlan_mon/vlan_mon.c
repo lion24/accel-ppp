@@ -26,6 +26,7 @@
 //#define VLAN_MON_PROTO_IP6    2
 
 #define VLAN_MON_NLMSG_SIZE (NLMSG_DEFAULT_SIZE - GENL_HDRLEN - 128)
+#define GENL_ID_GENERATE 0
 
 #ifndef DEFINE_SEMAPHORE
 #define DEFINE_SEMAPHORE(name) struct semaphore name = __SEMAPHORE_INITIALIZER(name, 1)
@@ -697,13 +698,11 @@ static struct genl_family vlan_mon_nl_family = {
 	.version	= VLAN_MON_GENL_VERSION,
 	.hdrsize	= 0,
 	.maxattr	= VLAN_MON_ATTR_MAX,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
 	.module = THIS_MODULE,
 	.ops = vlan_mon_nl_ops,
 	.n_ops = ARRAY_SIZE(vlan_mon_nl_ops),
 	.mcgrps = vlan_mon_nl_mcgs,
 	.n_mcgrps = ARRAY_SIZE(vlan_mon_nl_mcgs),
-#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 	.policy = vlan_mon_nl_policy,
 #endif
@@ -727,8 +726,6 @@ static int __init vlan_mon_init(void)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0) && RHEL_MAJOR < 7
 	err = genl_register_family_with_ops(&vlan_mon_nl_family, vlan_mon_nl_ops, ARRAY_SIZE(vlan_mon_nl_ops));
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
-	err = genl_register_family_with_ops_groups(&vlan_mon_nl_family, vlan_mon_nl_ops, vlan_mon_nl_mcgs);
 #else
 	err = genl_register_family(&vlan_mon_nl_family);
 #endif

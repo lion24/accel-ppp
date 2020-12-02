@@ -48,6 +48,7 @@
 #define IPOE_TIMEOUT_U 30 //5s
 
 #define IPOE_NLMSG_SIZE (NLMSG_DEFAULT_SIZE - GENL_HDRLEN - 128)
+#define GENL_ID_GENERATE 0
 
 #ifndef DEFINE_SEMAPHORE
 #define DEFINE_SEMAPHORE(name) struct semaphore name = __SEMAPHORE_INITIALIZER(name, 1)
@@ -979,7 +980,7 @@ static unsigned int ipt_out_hook(void *priv, struct sk_buff *skb, const struct n
 	return NF_ACCEPT;
 }*/
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0) && RHEL_MAJOR < 7
 static struct rtnl_link_stats64 *ipoe_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 #else
 static void ipoe_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
@@ -1024,7 +1025,7 @@ static void ipoe_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats
 	stats->rx_dropped = dev->stats.rx_dropped;
 	stats->tx_dropped = dev->stats.tx_dropped;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,11,0) && RHEL_MAJOR < 7
 	return stats;
 #endif
 }
@@ -1858,13 +1859,11 @@ static struct genl_family ipoe_nl_family = {
 	.version	= IPOE_GENL_VERSION,
 	.hdrsize	= 0,
 	.maxattr	= IPOE_ATTR_MAX,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
 	.module = THIS_MODULE,
 	.ops = ipoe_nl_ops,
 	.n_ops = ARRAY_SIZE(ipoe_nl_ops),
 	.mcgrps = ipoe_nl_mcgs,
 	.n_mcgrps = ARRAY_SIZE(ipoe_nl_mcgs),
-#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,2,0)
 	.policy = ipoe_nl_policy,
 #endif
@@ -1907,8 +1906,6 @@ static int __init ipoe_init(void)
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0) && RHEL_MAJOR < 7
 	err = genl_register_family_with_ops(&ipoe_nl_family, ipoe_nl_ops, ARRAY_SIZE(ipoe_nl_ops));
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
-	err = genl_register_family_with_ops_groups(&ipoe_nl_family, ipoe_nl_ops, ipoe_nl_mcgs);
 #else
 	err = genl_register_family(&ipoe_nl_family);
 #endif
